@@ -1,9 +1,9 @@
 package main
 
 /*
-#cgo LDFLAGS: -lleveldb
+#cgo LDFLAGS: -lhyperleveldb
 #include <string.h>
-#include <leveldb/c.h>
+#include <hyperleveldb/c.h>
 
 static void CmpDestroy(void* arg) { }
 
@@ -22,15 +22,15 @@ static const char* CmpName(void* arg) {
   return "foo";
 }
 
-static leveldb_comparator_t* CmpFooNew() {
-  return leveldb_comparator_create(NULL, CmpDestroy, CmpCompare, CmpName);
+static hyperleveldb_comparator_t* CmpFooNew() {
+  return hyperleveldb_comparator_create(NULL, CmpDestroy, CmpCompare, CmpName);
 }
 
 */
 import "C"
 
 type Comparator struct {
-	Comparator *C.leveldb_comparator_t
+	Comparator *C.hyperleveldb_comparator_t
 }
 
 func NewFooComparator() *Comparator {
@@ -38,7 +38,7 @@ func NewFooComparator() *Comparator {
 }
 
 func (cmp *Comparator) Close() {
-	C.leveldb_comparator_destroy(cmp.Comparator)
+	C.hyperleveldb_comparator_destroy(cmp.Comparator)
 }
 
 func main() {
