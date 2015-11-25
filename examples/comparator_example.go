@@ -22,15 +22,15 @@ static const char* CmpName(void* arg) {
   return "foo";
 }
 
-static hyperleveldb_comparator_t* CmpFooNew() {
-  return hyperleveldb_comparator_create(NULL, CmpDestroy, CmpCompare, CmpName);
+static leveldb_comparator_t* CmpFooNew() {
+  return leveldb_comparator_create(NULL, CmpDestroy, CmpCompare, CmpName);
 }
 
 */
 import "C"
 
 type Comparator struct {
-	Comparator *C.hyperleveldb_comparator_t
+	Comparator *C.leveldb_comparator_t
 }
 
 func NewFooComparator() *Comparator {
@@ -38,7 +38,7 @@ func NewFooComparator() *Comparator {
 }
 
 func (cmp *Comparator) Close() {
-	C.hyperleveldb_comparator_destroy(cmp.Comparator)
+	C.leveldb_comparator_destroy(cmp.Comparator)
 }
 
 func main() {

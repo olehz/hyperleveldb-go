@@ -74,15 +74,15 @@ func (o *Options) Close() {
 // operations.
 //
 // The default comparator is usually sufficient.
-func (o *Options) SetComparator(cmp *C.hyperleveldb_comparator_t) {
-	C.hyperleveldb_options_set_comparator(o.Opt, cmp)
+func (o *Options) SetComparator(cmp *C.leveldb_comparator_t) {
+	C.leveldb_options_set_comparator(o.Opt, cmp)
 }
 
 // SetErrorIfExists, if passed true, will cause the opening of a database that
 // already exists to throw an error.
 func (o *Options) SetErrorIfExists(error_if_exists bool) {
 	eie := boolToUchar(error_if_exists)
-	C.hyperleveldb_options_set_error_if_exists(o.Opt, eie)
+	C.leveldb_options_set_error_if_exists(o.Opt, eie)
 }
 
 // SetCache places a cache object in the database when a database is opened.
