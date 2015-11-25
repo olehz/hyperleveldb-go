@@ -12,7 +12,7 @@ import "C"
 // To prevent memory leaks, an Env must have Close called on it when it is
 // no longer needed by the program.
 type Env struct {
-	Env *C.hyperleveldb_env_t
+	Env *C.leveldb_env_t
 }
 
 // NewDefaultEnv creates a default environment for use in an Options.
@@ -20,10 +20,10 @@ type Env struct {
 // To prevent memory leaks, the Env returned should be deallocated with
 // Close.
 func NewDefaultEnv() *Env {
-	return &Env{C.hyperleveldb_create_default_env()}
+	return &Env{C.leveldb_create_default_env()}
 }
 
 // Close deallocates the Env, freeing the underlying struct.
 func (env *Env) Close() {
-	C.hyperleveldb_env_destroy(env.Env)
+	C.leveldb_env_destroy(env.Env)
 }

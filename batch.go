@@ -14,18 +14,18 @@ import (
 // To prevent memory leaks, call Close when the program no longer needs the
 // WriteBatch object.
 type WriteBatch struct {
-	wbatch *C.hyperleveldb_writebatch_t
+	wbatch *C.leveldb_writebatch_t
 }
 
 // NewWriteBatch creates a fully allocated WriteBatch.
 func NewWriteBatch() *WriteBatch {
-	wb := C.hyperleveldb_writebatch_create()
+	wb := C.leveldb_writebatch_create()
 	return &WriteBatch{wb}
 }
 
 // Close releases the underlying memory of a WriteBatch.
 func (w *WriteBatch) Close() {
-	C.hyperleveldb_writebatch_destroy(w.wbatch)
+	C.leveldb_writebatch_destroy(w.wbatch)
 }
 
 // Put places a key-value pair into the WriteBatch for writing later.
@@ -48,7 +48,7 @@ func (w *WriteBatch) Put(key, value []byte) {
 	lenk := len(key)
 	lenv := len(value)
 
-	C.hyperleveldb_writebatch_put(w.wbatch, k, C.size_t(lenk), v, C.size_t(lenv))
+	C.leveldb_writebatch_put(w.wbatch, k, C.size_t(lenk), v, C.size_t(lenv))
 }
 
 // Delete queues a deletion of the data at key to be deleted later.
@@ -56,11 +56,11 @@ func (w *WriteBatch) Put(key, value []byte) {
 // The key byte slice may be reused safely. Delete takes a copy of
 // them before returning.
 func (w *WriteBatch) Delete(key []byte) {
-	C.hyperleveldb_writebatch_delete(w.wbatch,
+	C.leveldb_writebatch_delete(w.wbatch,
 		(*C.char)(unsafe.Pointer(&key[0])), C.size_t(len(key)))
 }
 
 // Clear removes all the enqueued Put and Deletes in the WriteBatch.
 func (w *WriteBatch) Clear() {
-	C.hyperleveldb_writebatch_clear(w.wbatch)
+	C.leveldb_writebatch_clear(w.wbatch)
 }

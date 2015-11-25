@@ -8,12 +8,12 @@ package hyperleveldb
 // This function exists only to clean up lack-of-const warnings when
 // hyperleveldb_approximate_sizes is called from Go-land.
 void hyperleveldb_rocksdb_approximate_sizes(
-    hyperleveldb_t* db,
+    leveldb_t* db,
     int num_ranges,
     char** range_start_key, const size_t* range_start_key_len,
     char** range_limit_key, const size_t* range_limit_key_len,
     uint64_t* sizes) {
-  hyperleveldb_approximate_sizes(db,
+  leveldb_approximate_sizes(db,
                             num_ranges,
                             (const char* const*)range_start_key,
                             range_start_key_len,
@@ -44,7 +44,7 @@ func (e DatabaseError) Error() string {
 // conditions will occur if the same key is written to from more than one, of
 // course.
 type DB struct {
-	Ldb *C.hyperleveldb_t
+	Ldb *C.leveldb_t
 }
 
 // Range is a range of keys in the database. GetApproximateSizes calls with it
@@ -61,7 +61,7 @@ type Range struct {
 // returned must be released with DB.ReleaseSnapshot method on the DB that
 // created it.
 type Snapshot struct {
-	snap *C.hyperleveldb_snapshot_t
+	snap *C.leveldb_snapshot_t
 }
 
 // Open opens a database.
@@ -76,7 +76,7 @@ func Open(dbname string, o *Options) (*DB, error) {
 	ldbname := C.CString(dbname)
 	defer C.free(unsafe.Pointer(ldbname))
 
-	hyperleveldb := C.hyperleveldb_open(o.Opt, ldbname, &errStr)
+	hyperleveldb := C.leveldb_open(o.Opt, ldbname, &errStr)
 	if errStr != nil {
 		gs := C.GoString(errStr)
 		C.free(unsafe.Pointer(errStr))
@@ -92,7 +92,7 @@ func DestroyDatabase(dbname string, o *Options) error {
 	ldbname := C.CString(dbname)
 	defer C.free(unsafe.Pointer(ldbname))
 
-	C.hyperleveldb_destroy_db(o.Opt, ldbname, &errStr)
+	C.leveldb_destroy_db(o.Opt, ldbname, &errStr)
 	if errStr != nil {
 		gs := C.GoString(errStr)
 		C.free(unsafe.Pointer(errStr))
@@ -109,7 +109,7 @@ func RepairDatabase(dbname string, o *Options) error {
 	ldbname := C.CString(dbname)
 	defer C.free(unsafe.Pointer(ldbname))
 
-	C.hyperleveldb_repair_db(o.Opt, ldbname, &errStr)
+	C.leveldb_repair_db(o.Opt, ldbname, &errStr)
 	if errStr != nil {
 		gs := C.GoString(errStr)
 		C.free(unsafe.Pointer(errStr))
@@ -127,7 +127,7 @@ func RepairDatabase(dbname string, o *Options) error {
 // them before returning.
 func (db *DB) Put(wo *WriteOptions, key, value []byte) error {
 	var errStr *C.char
-	// hyperleveldb_put, _get, and _delete call memcpy() (by way of Memtable::Add)
+	// leveldb_put, _get, and _delete call memcpy() (by way of Memtable::Add)
 	// when called, so we do not need to worry about these []byte being
 	// reclaimed by GC.
 	var k, v *C.char
@@ -140,7 +140,7 @@ func (db *DB) Put(wo *WriteOptions, key, value []byte) error {
 
 	lenk := len(key)
 	lenv := len(value)
-	C.hyperleveldb_put(
+	C.leveldb_put(
 		db.Ldb, wo.Opt, k, C.size_t(lenk), v, C.size_t(lenv), &errStr)
 
 	if errStr != nil {
@@ -167,7 +167,7 @@ func (db *DB) Get(ro *ReadOptions, key []byte) ([]byte, error) {
 		k = (*C.char)(unsafe.Pointer(&key[0]))
 	}
 
-	value := C.hyperleveldb_get(
+	value := C.leveldb_get(
 		db.Ldb, ro.Opt, k, C.size_t(len(key)), &vallen, &errStr)
 
 	if errStr != nil {
@@ -195,7 +195,7 @@ func (db *DB) Delete(wo *WriteOptions, key []byte) error {
 		k = (*C.char)(unsafe.Pointer(&key[0]))
 	}
 
-	C.hyperleveldb_delete(
+	C.leveldb_delete(
 		db.Ldb, wo.Opt, k, C.size_t(len(key)), &errStr)
 
 	if errStr != nil {
@@ -209,7 +209,7 @@ func (db *DB) Delete(wo *WriteOptions, key []byte) error {
 // Write atomically writes a WriteBatch to disk.
 func (db *DB) Write(wo *WriteOptions, w *WriteBatch) error {
 	var errStr *C.char
-	C.hyperleveldb_write(db.Ldb, wo.Opt, w.wbatch, &errStr)
+	C.leveldb_write(db.Ldb, wo.Opt, w.wbatch, &errStr)
 	if errStr != nil {
 		gs := C.GoString(errStr)
 		C.free(unsafe.Pointer(errStr))
@@ -229,7 +229,7 @@ func (db *DB) Write(wo *WriteOptions, w *WriteBatch) error {
 //
 // Similiarly, ReadOptions.SetSnapshot is also useful.
 func (db *DB) NewIterator(ro *ReadOptions) *Iterator {
-	it := C.hyperleveldb_create_iterator(db.Ldb, ro.Opt)
+	it := C.leveldb_create_iterator(db.Ldb, ro.Opt)
 	return &Iterator{Iter: it}
 }
 
@@ -272,7 +272,7 @@ func (db *DB) GetApproximateSizes(ranges []Range) []uint64 {
 // and "hyperleveldb.num-files-at-level0".
 func (db *DB) PropertyValue(propName string) string {
 	cname := C.CString(propName)
-	value := C.GoString(C.hyperleveldb_property_value(db.Ldb, cname))
+	value := C.GoString(C.leveldb_property_value(db.Ldb, cname))
 	C.free(unsafe.Pointer(cname))
 	return value
 }
@@ -288,13 +288,13 @@ func (db *DB) PropertyValue(propName string) string {
 //
 // See the LevelDB documentation for details.
 func (db *DB) NewSnapshot() *Snapshot {
-	return &Snapshot{C.hyperleveldb_create_snapshot(db.Ldb)}
+	return &Snapshot{C.leveldb_create_snapshot(db.Ldb)}
 }
 
 // ReleaseSnapshot removes the snapshot from the database's list of snapshots,
 // and deallocates it.
 func (db *DB) ReleaseSnapshot(snap *Snapshot) {
-	C.hyperleveldb_release_snapshot(db.Ldb, snap.snap)
+	C.leveldb_release_snapshot(db.Ldb, snap.snap)
 }
 
 // CompactRange runs a manual compaction on the Range of keys given. This is
@@ -307,7 +307,7 @@ func (db *DB) CompactRange(r Range) {
 	if len(r.Limit) != 0 {
 		limit = (*C.char)(unsafe.Pointer(&r.Limit[0]))
 	}
-	C.hyperleveldb_compact_range(
+	C.leveldb_compact_range(
 		db.Ldb, start, C.size_t(len(r.Start)), limit, C.size_t(len(r.Limit)))
 }
 
@@ -316,5 +316,5 @@ func (db *DB) CompactRange(r Range) {
 //
 // Any attempts to use the DB after Close is called will panic.
 func (db *DB) Close() {
-	C.hyperleveldb_close(db.Ldb)
+	C.leveldb_close(db.Ldb)
 }
